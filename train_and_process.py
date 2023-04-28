@@ -1,4 +1,7 @@
 # train_and_process.py
+import os
+from sys import platform
+
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
@@ -55,8 +58,26 @@ def train_and_process(iteration, ResulNPA_np, ResulNPB_np, ResulNPC_np, ResulNPD
         # 创建一个线程锁，用于同步进度更新
         progress_lock = threading.Lock()
         # 初始化tqdm进度条
+        def get_max_threads():
+            import platform as plt
+            os_type = plt.system()
+            if os_type == "Windows":
+                # 在Windows系统中，获取CPU核心数
+                return os.cpu_count()
+            elif os_type == "Linux":
+                try:
+                    # 在Linux系统中，获取系统支持的最大线程数
+                    return os.sysconf("SC_THREAD_THREADS_MAX")
+                except AttributeError:
+                    # 如果在Linux系统中出现异常，获取CPU核心数
+                    return os.cpu_count()
+            else:
+                # 对于其他操作系统，获取CPU核心数
+                return os.cpu_count()
+
+        max_threads = get_max_threads()
         progress_bar = tqdm(total=len(subsequences), desc="自相关处理进度", ncols=100, leave=True, position=0)
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
             autocorrelation_with_lag_and_lock = partial(autocorrelation_task, max_lag=max_lag,
                                                         progress_lock=progress_lock)
             # 使用list()将结果收集到一个列表中
