@@ -40,10 +40,29 @@ def train_and_process(iteration, ResulNPA_np, ResulNPB_np, ResulNPC_np, ResulNPD
     # 对每个子序列计算自相关特征
     print("==>计算自相关特征")
     from tqdm.auto import tqdm
+    from tqdm.auto import tqdm
+    import concurrent.futures
+    from functools import partial
+    import threading
     def calculate_features(subsequences, max_lag, position):
+        def autocorrelation_task(seq, max_lag, progress_lock):
+            result = autocorrelation(seq, max_lag)
+            with progress_lock:
+                progress_bar.update(1)
+            return result
+
         features = []
-        for seq in tqdm(subsequences, desc="自相关处理进度", ncols=100, leave=True, position=0):
-            features.append(autocorrelation(seq, max_lag))
+        # 创建一个线程锁，用于同步进度更新
+        progress_lock = threading.Lock()
+        # 初始化tqdm进度条
+        progress_bar = tqdm(total=len(subsequences), desc="自相关处理进度", ncols=100, leave=True, position=0)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            autocorrelation_with_lag_and_lock = partial(autocorrelation_task, max_lag=max_lag,
+                                                        progress_lock=progress_lock)
+            # 使用list()将结果收集到一个列表中
+            features = list(executor.map(autocorrelation_with_lag_and_lock, subsequences))
+        # 关闭进度条
+        progress_bar.close()
         return features
 
     features_A = calculate_features(subsequences_A, max_lag, 0)
