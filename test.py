@@ -8,7 +8,10 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 
 def test_saved_model(model_path, X_test, y_test):
     # 加载保存的模型
-    model = load_model(model_path)
+
+    load_options = tf.saved_model.LoadOptions(experimental_io_device="/job:localhost")
+    model = load_model(model_path, options=load_options)
+
 
     # 预测测试集
     y_pred = model.predict(X_test)
@@ -139,44 +142,30 @@ if __name__ == "__main__":
     import concurrent.futures
     from functools import partial
     import threading
+    from tqdm.auto import tqdm
+    import concurrent.futures
+    from functools import partial
+
+
     def calculate_features(subsequences, max_lag, position):
-        def autocorrelation_task(seq, max_lag, progress_lock):
-            result = autocorrelation(seq, max_lag)
-            with progress_lock:
-                progress_bar.update(1)
-            return result
+        # 定义一个用于计算自相关的函数，将其作为线程的任务
+        def autocorrelation_task(seq, max_lag):
+            return autocorrelation(seq, max_lag)
 
         features = []
-        # 创建一个线程锁，用于同步进度更新
-        progress_lock = threading.Lock()
-        # 初始化tqdm进度条
-        def get_max_threads():
-            import platform as plt
-            os_type = plt.system()
-            if os_type == "Windows":
-                # 在Windows系统中，获取CPU核心数
-                return os.cpu_count()
-            elif os_type == "Linux":
-                try:
-                    # 在Linux系统中，获取系统支持的最大线程数
-                    return os.sysconf("SC_THREAD_THREADS_MAX")
-                except AttributeError:
-                    # 如果在Linux系统中出现异常，获取CPU核心数
-                    return os.cpu_count()
-            else:
-                # 对于其他操作系统，获取CPU核心数
-                return os.cpu_count()
 
-        max_threads = get_max_threads()
-        progress_bar = tqdm(total=len(subsequences), desc="自相关处理进度", ncols=100, leave=True, position=0)
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
-            autocorrelation_with_lag_and_lock = partial(autocorrelation_task, max_lag=max_lag,
-                                                        progress_lock=progress_lock)
-            # 使用list()将结果收集到一个列表中
-            features = list(executor.map(autocorrelation_with_lag_and_lock, subsequences))
-        # 关闭进度条
-        progress_bar.close()
+        # 创建一个线程池，并指定线程数，这里我们将线程数设置为系统的CPU核心数
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # 使用partial创建一个新的函数，将max_lag参数固定
+            autocorrelation_with_lag = partial(autocorrelation_task, max_lag=max_lag)
+
+            # 将子序列分配给线程池中的线程，并收集结果
+            for feature in tqdm(executor.map(autocorrelation_with_lag, subsequences), total=len(subsequences),
+                                desc="自相关处理进度", ncols=100, leave=True, position=0):
+                features.append(feature)
+
         return features
+
 
     features_A = calculate_features(subsequences_A, max_lag, 0)
     features_B = calculate_features(subsequences_B, max_lag, 0)
