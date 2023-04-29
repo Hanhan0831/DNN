@@ -1,4 +1,4 @@
-# train_and_process.py
+# -*- coding: utf-8 -*-
 import os
 from sys import platform
 
@@ -46,40 +46,28 @@ def train_and_process(iteration, ResulNPA_np, ResulNPB_np, ResulNPC_np, ResulNPD
     import concurrent.futures
     from functools import partial
     import threading
+    from tqdm.auto import tqdm
+    import concurrent.futures
+    from functools import partial
+
     def calculate_features(subsequences, max_lag, position):
-        def autocorrelation_task(seq, max_lag, progress_lock):
-            result = autocorrelation(seq, max_lag)
-            with progress_lock:
-                progress_bar.update(1)
-            return result
+        # 定义一个用于计算自相关的函数，将其作为线程的任务
+        def autocorrelation_task(seq, max_lag):
+            return autocorrelation(seq, max_lag)
 
         features = []
-        # 创建一个线程锁，用于同步进度更新
-        progress_lock = threading.Lock()
 
-        # 初始化tqdm进度条
-        from tqdm.auto import tqdm
-        import concurrent.futures
-        from functools import partial
+        # 创建一个线程池，并指定线程数，这里我们将线程数设置为系统的CPU核心数
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # 使用partial创建一个新的函数，将max_lag参数固定
+            autocorrelation_with_lag = partial(autocorrelation_task, max_lag=max_lag)
 
-        def calculate_features(subsequences, max_lag, position):
-            # 定义一个用于计算自相关的函数，将其作为线程的任务
-            def autocorrelation_task(seq, max_lag):
-                return autocorrelation(seq, max_lag)
+            # 将子序列分配给线程池中的线程，并收集结果
+            for feature in tqdm(executor.map(autocorrelation_with_lag, subsequences), total=len(subsequences),
+                                desc="自相关处理进度", ncols=100, leave=True, position=0):
+                features.append(feature)
 
-            features = []
-
-            # 创建一个线程池，并指定线程数，这里我们将线程数设置为系统的CPU核心数
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                # 使用partial创建一个新的函数，将max_lag参数固定
-                autocorrelation_with_lag = partial(autocorrelation_task, max_lag=max_lag)
-
-                # 将子序列分配给线程池中的线程，并收集结果
-                for feature in tqdm(executor.map(autocorrelation_with_lag, subsequences), total=len(subsequences),
-                                    desc="自相关处理进度", ncols=100, leave=True, position=0):
-                    features.append(feature)
-
-            return features
+        return features
 
     features_A = calculate_features(subsequences_A, max_lag, 0)
     features_B = calculate_features(subsequences_B, max_lag, 0)
