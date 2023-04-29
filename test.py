@@ -21,11 +21,38 @@ def test_saved_model(model_path, X_test, y_test):
     print("分类报告：")
     print(classification_report(y_test_classes, y_pred_classes))
 
+    def compare_arrays(y_pred, y_true):
+        if y_pred.shape != y_true.shape:
+            raise ValueError("两个数组的形状不同，请确保它们具有相同的形状。")
+
+        # 初始化类别计数器
+        categories_count = {}
+        correct_categories_count = {}
+
+        for i in range(y_true.shape[0]):
+            true_label = y_true[i]
+            pred_label = y_pred[i]
+
+            # 更新类别计数器
+            if true_label not in categories_count:
+                categories_count[true_label] = 0
+                correct_categories_count[true_label] = 0
+
+            categories_count[true_label] += 1
+
+            # 检查预测值是否正确
+            if true_label == pred_label:
+                correct_categories_count[true_label] += 1
+
+        # 计算并打印每个类别的准确率
+        for category in categories_count:
+            accuracy = correct_categories_count[category] / categories_count[category]
+            print(f"类别 {category} 的准确率: {accuracy:.2f}")
+
+    compare_arrays(y_test_classes, y_pred_classes)
     print("混淆矩阵：")
     print(confusion_matrix(y_test_classes, y_pred_classes))
 
-    print("准确率：")
-    print(accuracy_score(y_test_classes, y_pred_classes))
     zero = 0
     one = 0
     two = 0
