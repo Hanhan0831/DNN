@@ -26,7 +26,19 @@ def test_saved_model(model_path, X_test, y_test):
 
     print("准确率：")
     print(accuracy_score(y_test_classes, y_pred_classes))
-
+    zero = 0
+    one = 0
+    two = 0
+    three = 0
+    for i in y_pred_classes:
+        if i == 0:
+            zero += 1
+        elif i == 1:
+            one += 1
+        elif i == 2:
+            two += 1
+        else:
+            three += 1
 if __name__ == "__main__":
     import sys
 

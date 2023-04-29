@@ -39,10 +39,10 @@ def readFileAndProcess(FileName):
     return NPROData, RODataPre, ROData
 
 
-FileA = "1.txt"
-FileB = "2.txt"
-FileC = "3.txt"
-FileD = "4.txt"
+FileA = "delta_donothing.txt"
+FileB = "delta_vivado.txt"
+FileC = "delta_with_extended_cable_donothing.txt"
+FileD = "delta_with_extended_cable_vivado.txt"
 print("==>预处理数据开始")
 ResulNPA, ResulROA, ResulROorA = readFileAndProcess(FileA)
 ResulNPB, ResulROB, ResulROorB = readFileAndProcess(FileB)
@@ -75,7 +75,9 @@ chunk_size = 500000
 max_iterations = len(ResulNPA)
 total_iterations = max_iterations // chunk_size
 print("总数据长度=",len(ResulNPA),",循环次数",total_iterations)
-for i in range(total_iterations):
+initial_i = 0
+
+for i in range(initial_i, total_iterations):
     print("正在进行循环:", i)
 
     start_index = i * chunk_size

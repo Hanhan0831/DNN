@@ -56,6 +56,7 @@ def train_and_process(iteration, ResulNPA_np, ResulNPB_np, ResulNPC_np, ResulNPD
         features = []
         # 创建一个线程锁，用于同步进度更新
         progress_lock = threading.Lock()
+
         # 初始化tqdm进度条
         def get_max_threads():
             import platform as plt
@@ -74,9 +75,9 @@ def train_and_process(iteration, ResulNPA_np, ResulNPB_np, ResulNPC_np, ResulNPD
                 # 对于其他操作系统，获取CPU核心数
                 return os.cpu_count()
 
-        max_threads = get_max_threads()
+        #max_threads = get_max_threads()
         progress_bar = tqdm(total=len(subsequences), desc="自相关处理进度", ncols=100, leave=True, position=0)
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
             autocorrelation_with_lag_and_lock = partial(autocorrelation_task, max_lag=max_lag,
                                                         progress_lock=progress_lock)
             # 使用list()将结果收集到一个列表中
@@ -146,7 +147,7 @@ def train_and_process(iteration, ResulNPA_np, ResulNPB_np, ResulNPC_np, ResulNPD
 
     # 如果提供了先前模型的路径，加载该模型；否则，创建一个新模型
     if iteration > 0:
-        model = load_model("my_lstm_model_iteration_{}.h5".format(iteration-1))
+        model = load_model("my_lstm_model_iteration_{}".format(iteration-1))
     else:
         # 创建一个新模型
         model = Sequential()
@@ -167,7 +168,7 @@ def train_and_process(iteration, ResulNPA_np, ResulNPB_np, ResulNPC_np, ResulNPD
     print("Test accuracy:", test_accuracy)
 
     # 保存模型
-    model_path = "my_lstm_model_iteration_{}.h5".format(iteration)
+    model_path = "my_lstm_model_iteration_{}".format(iteration)
     model.save(model_path)
     return model_path
 
