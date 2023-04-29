@@ -1,6 +1,5 @@
-# test_saved_model.py
+# -*- coding: utf-8 -*-
 import os
-
 import numpy as np
 from tensorflow.keras.models import load_model
 from sklearn.preprocessing import StandardScaler

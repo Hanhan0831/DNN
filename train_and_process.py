@@ -1,4 +1,4 @@
-# train_and_process.py
+# -*- coding: utf-8 -*-
 import os
 from sys import platform
 

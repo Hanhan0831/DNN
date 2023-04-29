@@ -1,6 +1,9 @@
-# main.py
+# -*- coding: utf-8 -*-
+import os
+os.system("pip install -r requirements.txt")
 from train_and_process import train_and_process
 import numpy as np
+
 def readFileAndProcess(FileName):
     ROData = []
     with open(FileName) as f:  # delta_last.txt processed_delta.txt
