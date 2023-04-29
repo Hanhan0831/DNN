@@ -43,7 +43,6 @@ def train_and_process(iteration, ResulNPA_np, ResulNPB_np, ResulNPC_np, ResulNPD
     # 对每个子序列计算自相关特征
     print("==>计算自相关特征")
     from tqdm.auto import tqdm
-    from tqdm.auto import tqdm
     import concurrent.futures
     from functools import partial
     import threading
